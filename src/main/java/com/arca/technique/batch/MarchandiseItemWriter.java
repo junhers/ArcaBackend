@@ -11,6 +11,7 @@ import com.arca.technique.repository.MarchandiseRepository;
 
 @Component
 public class MarchandiseItemWriter implements ItemWriter<Marchandise> {
+
 	@Autowired
 	private MarchandiseRepository marchandiseRepository;
 

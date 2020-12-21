@@ -5,6 +5,7 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
@@ -24,49 +25,45 @@ public class SpringBatchConfig {
 
 	@Autowired
 	private JobBuilderFactory jobBuilderFactory;
-	
+
 	@Autowired
 	private StepBuilderFactory stepBuilderFactory;
-	
+
 	@Autowired
 	private ItemReader<Marchandise> itemReader;
-	
+
 	@Autowired
 	private ItemWriter<Marchandise> itemWriter;
-	
-	
+
 	@Bean
 	public Job job(Step step1) {
-		return jobBuilderFactory.get("Marchandise") 
-				.start(step1).build();
+		return jobBuilderFactory.get("Marchandise").incrementer(new RunIdIncrementer()).start(step1())
+				.build();
 	}
 
 	@Bean
 	public Step step1() {
-		return stepBuilderFactory.get("première étape: chargement de fichier")
-				.<Marchandise, Marchandise>chunk(100)
-				.reader(itemReader)
-				.writer(itemWriter)
-				.build();
+		return stepBuilderFactory.get("première étape: chargement de fichier").<Marchandise, Marchandise>chunk(1)
+				.reader(itemReader).writer(itemWriter)
+				.listener(listener()).build();
 
 	}
 
 	@Bean
+	public MarchandiseCountListener listener() {
+
+		return new MarchandiseCountListener();
+	}
+
+	@Bean
 	public FlatFileItemReader<Marchandise> reader(@Value("${inputFile}") Resource resource) {
-		return new FlatFileItemReaderBuilder<Marchandise>()
-				.name("marchandiseItemReader")
-				.resource(resource)
-				.delimited()
-				.names(new String[] {"date", "valeur", "pays"})
+		return new FlatFileItemReaderBuilder<Marchandise>().name("marchandiseItemReader").resource(resource)
+				.delimited().names(new String[] { "date", "valeur", "pays" })
 				.fieldSetMapper(new BeanWrapperFieldSetMapper<Marchandise>() {
 					{
 						setTargetType(Marchandise.class);
 					}
 				}).build();
 	}
-	
-}
-	
 
-	
-	
+}
